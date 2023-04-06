@@ -2,9 +2,13 @@
 	import { tick } from "svelte";
 	import Katex from "./Katex.svelte";
 
-	let currentExpr = `\\frac{a^2}{b}`;
+	let currentExpr = "";
 	let fieldStr;
 	let resetBtn;
+	let loaded = false;
+	setTimeout(() => {
+		loaded = true;
+	}, 1000);
 
 	const copy2Clip = async () => {
 		currentExpr = currentExpr.replaceAll("\\\\", "\\");
@@ -53,7 +57,7 @@
 </script>
 
 <main>
-	{#if currentExpr !== ""}
+	{#if currentExpr.trim() !== ""}
 		<div class="output">
 			<Katex
 				expression={currentExpr.replace(/\\\\/g, "\\")}
@@ -63,55 +67,61 @@
 		</div>
 	{/if}
 	<div class="inp-cont">
-		<textarea bind:this={fieldStr} bind:value={currentExpr} />
+		<textarea
+			placeholder="Write your expression here..."
+			bind:this={fieldStr}
+			bind:value={currentExpr}
+		/>
 		<!-- on:keyup={(e) => keyUpFeatures(e)} -->
 	</div>
 	<div class="actions">
 		<button
-			style="border: 0; background: #74efff; border-radius: 10px; color: #000; padding:10px 20px; font-size: 18px"
+			style="border: 0; background: #74efff; border-radius: 10px; color: #000; padding:10px 16px; font-size: 18px"
 			on:click={() => copy2Clip()}>Copy</button
 		>
 		<button
-			style="border: 0; background: #74efff; border-radius: 10px; color: #000; padding: 7.5px 20px; font-size: 18px"
+			style="border: 0; background: #74efff; border-radius: 10px; color: #000; padding: 7.5px 16px; font-size: 18px; display: flex; align-items: center; justify-content: space-between;"
 			on:click={() => copy2ClipForCode()}
-			>Copy : <code>\</code>
-			<Katex expression={"\\rightarrow"} />
+			>Copy :&nbsp;<code>\</code>
+			<div style="transform: translate(0, -2px);">→</div>
 			<code>\\</code></button
 		>
 		<button
 			bind:this={resetBtn}
-			style="border: 0; background: #ffc6b5; border-radius: 10px; color: #000; padding:10px 20px; font-size: 18px"
+			style="border: 0; background: #ffc6b5; border-radius: 10px; color: #000; padding:10px 16px; font-size: 18px"
 			on:click={() => (currentExpr = "")}>Reset</button
 		>
 	</div>
-	<aside>
-		<b style="margin: 5px 0;font-size: 20px;">Demo</b>
-		{#each demo as d}
-			<div>
-				<button class="code" on:click={() => (currentExpr = d)}
-					>{d}</button
+	{#if loaded}
+		<aside>
+			<b style="margin: 5px 0;font-size: 20px;">Demo</b>
+			{#each demo as d}
+				<div>
+					<button class="code" on:click={() => (currentExpr = d)}
+						>{d}</button
+					>
+					=
+					<Katex expression={d} />
+				</div>
+			{/each}
+			<p style="display: flex; flex-direction: column; gap: 12px">
+				<a
+					href="https://katex.org/docs/supported.html"
+					target="_blank"
+					rel="noreferrer"
 				>
-				=
-				<Katex expression={d} />
-			</div>
-		{/each}
-		<p style="display: flex; flex-direction: column; gap: 12px">
-			<a
-				href="https://katex.org/docs/supported.html"
-				target="_blank"
-				rel="noreferrer"
-			>
-				<b>More Demo...</b>
-			</a>
-			<a
-				href="https://detexify.kirelabs.org/classify.html"
-				target="_blank"
-				rel="noreferrer"
-			>
-				<b>Detect a Symbol by Drawing...</b>
-			</a>
-		</p>
-	</aside>
+					<b>More Demo...</b>
+				</a>
+				<a
+					href="https://detexify.kirelabs.org/classify.html"
+					target="_blank"
+					rel="noreferrer"
+				>
+					<b>Detect a Symbol by Drawing...</b>
+				</a>
+			</p>
+		</aside>
+	{/if}
 </main>
 
 <style>
