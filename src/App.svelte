@@ -28,22 +28,29 @@
 		resetBtn.focus();
 	};
 
-	// const keyUpFeatures = async (e) => {
-	// 	if (e.key === "{") {
-	// 		const { selectionStart, selectionEnd, value } = fieldStr;
-	// 		if (selectionStart === selectionEnd) {
-	// 			currentExpr =
-	// 				value.slice(0, selectionStart) +
-	// 				"}" +
-	// 				value.slice(selectionStart, value.length);
-	// 		}
-	// 		await tick();
-	// 		fieldStr.selectionStart = selectionStart;
-	// 		fieldStr.selectionEnd = selectionEnd;
-	// 		fieldStr.focus();
-	// 	}
-	// };
+	const featureKey = async (key, cursor = 1) => {
+		const { selectionStart, selectionEnd, value } = fieldStr;
+		if (selectionStart === selectionEnd) {
+			currentExpr =
+				value.slice(0, selectionStart) +
+				key +
+				value.slice(selectionStart, value.length);
+		}
+		await tick();
+		fieldStr.selectionStart = selectionStart + cursor;
+		fieldStr.selectionEnd = selectionStart + cursor;
+		fieldStr.focus();
+	};
 
+	let necessaryBtn = ["{", "}", "^", "\\", "="];
+	let preExpression = [
+		{ key: "{}", cursor: 1 },
+		{ key: "\\times ", cursor: 7 },
+		{ key: "\\div ", cursor: 5 },
+		{ key: "\\frac{}{}", cursor: 6 },
+		{ key: "\\sqrt{}", cursor: 6 },
+	];
+	console.log(preExpression[0].key);
 	let demo = [
 		"a^2",
 		"a^{xyz}",
@@ -58,13 +65,11 @@
 
 <main>
 	{#if currentExpr.trim() !== ""}
-		<div class="output">
-			<Katex
-				expression={currentExpr.replace(/\\\\/g, "\\")}
-				displayMode
-			/>
+		<center class="output">
+			<Katex expression={currentExpr} />
+			<!-- displayMode -->
 			<!-- .replace(/\\/g, "\\\\") -->
-		</div>
+		</center>
 	{/if}
 	<div class="inp-cont">
 		<textarea
@@ -72,11 +77,37 @@
 			bind:this={fieldStr}
 			bind:value={currentExpr}
 		/>
-		<!-- on:keyup={(e) => keyUpFeatures(e)} -->
 	</div>
+	<aside class="feature-key">
+		{#each necessaryBtn as nb}
+			<button
+				class="feature-key-btn btn"
+				style="padding: 10px 20px;"
+				on:click={() => {
+					featureKey(nb);
+				}}
+			>
+				{nb}
+			</button>
+		{/each}
+	</aside>
+	<aside class="feature-key">
+		{#each preExpression as expData}
+			<button
+				class="feature-key-btn btn"
+				style="padding: 10px 10px;"
+				on:click={() => {
+					featureKey(expData.key, expData.cursor);
+				}}
+			>
+				{expData.key}
+			</button>
+		{/each}
+	</aside>
 	<div class="actions">
 		<button
-			style="border: 0; background: #74efff; border-radius: 10px; color: #000; padding:10px 16px; font-size: 18px"
+			class="btn"
+			style="background: #74efff;"
 			on:click={() => copy2Clip()}>Copy</button
 		>
 		<button
@@ -88,12 +119,17 @@
 		>
 		<button
 			bind:this={resetBtn}
-			style="border: 0; background: #ffc6b5; border-radius: 10px; color: #000; padding:10px 16px; font-size: 18px"
-			on:click={() => (currentExpr = "")}>Reset</button
+			class="btn"
+			style="background: #ffc6b5;"
+			on:click={() => {
+				currentExpr = "";
+				fieldStr.focus();
+			}
+			}>Reset</button
 		>
 	</div>
 	{#if loaded}
-		<aside>
+		<aside class="demo">
 			<b style="margin: 5px 0;font-size: 20px;">Demo</b>
 			{#each demo as d}
 				<div>
@@ -143,17 +179,20 @@
 		gap: 10px;
 	}
 	.output {
-		/* font-size: 30px; */
+		font-size: 18px;
 		background-color: #fff;
 		border-radius: 10px;
 		padding: 5px;
 		display: inline;
 	}
+	.inp-cont {
+		border-bottom: 2px solid #fffb;
+	}
 	textarea {
 		background-color: #fff;
 		width: calc(100% - 16px);
 		/* width: 100%; */
-		height: 120px;
+		height: 75px;
 		/* border: 2px dashed #444; */
 		border: 2px solid #ff3300;
 		/* margin: 0; */
@@ -168,7 +207,28 @@
 		align-items: center;
 		gap: 10px;
 	}
-	aside {
+	.btn {
+		border: 0;
+		border-radius: 10px;
+		color: #000;
+		padding: 10px 16px;
+		font-size: 18px;
+	}
+	.feature-key {
+		/* background-color: #fff; */
+		display: flex;
+		flex-direction: row;
+		flex-wrap: wrap;
+		justify-content: center;
+		align-items: center;
+		gap: 10px;
+		border-radius: 10px;
+	}
+	.feature-key-btn {
+		font-size: 18px;
+		padding: 3px 5px;
+	}
+	.demo {
 		background-color: #fff;
 		padding: 10px;
 		border-radius: 10px;
