@@ -42,18 +42,38 @@
 		fieldStr.focus();
 	};
 
-	let necessaryBtn = ["{", "}", "^", "\\", "="];
 	let preExpression = [
+		{ key: "+", cursor: 1 },
+		{ key: "-", cursor: 1 },
+		{ key: "×", cursor: 1 },
+		{ key: "÷", cursor: 1 },
+		{ key: "=", cursor: 1 },
+		{ key: "^", cursor: 1 },
+		{ key: "(", cursor: 1 },
+		{ key: ")", cursor: 1 },
+		{ key: "()", cursor: 1 },
+		{ key: "{", cursor: 1 },
+		{ key: "}", cursor: 1 },
 		{ key: "{}", cursor: 1 },
-		{ key: "\\times ", cursor: 7 },
-		{ key: "\\div ", cursor: 5 },
+		{ key: "[]", cursor: 1 },
+		{ key: "\\", cursor: 1 },
+		{ key: "°", cursor: 1 },
+		{ key: "_", cursor: 1 },
+		{ key: "$$", cursor: 1 },
+		{ key: "\\text{}", cursor: 6 },
 		{ key: "\\frac{}{}", cursor: 6 },
 		{ key: "\\sqrt{}", cursor: 6 },
+		{ key: "\\big", cursor: 4 },
+		{ key: "\\newline ", cursor: 9 },
 	];
-	console.log(preExpression[0].key);
+
+	let toBeCopied = [{ str: "asd" }];
+
 	let demo = [
 		"a^2",
 		"a^{xyz}",
+		"a_i",
+		"\\big( \\big) \\big[ \\big]",
 		"\\times\\div",
 		"\\frac{a}{b}",
 		"\\sqrt{ab}",
@@ -61,9 +81,13 @@
 		"\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}",
 		"\\frac{b}{2}\\sqrt{a^2-\\frac{b^2}{4}}",
 	];
+
+	let editting = false;
+	let tempStorage;
 </script>
 
 <main>
+	<!-- output -->
 	{#if currentExpr.trim() !== ""}
 		<center class="output">
 			<Katex expression={currentExpr} />
@@ -71,6 +95,7 @@
 			<!-- .replace(/\\/g, "\\\\") -->
 		</center>
 	{/if}
+	<!-- input -->
 	<div class="inp-cont">
 		<textarea
 			placeholder="Write your expression here..."
@@ -78,33 +103,57 @@
 			bind:value={currentExpr}
 		/>
 	</div>
-	<aside class="feature-key">
-		{#each necessaryBtn as nb}
-			<button
-				class="feature-key-btn btn"
-				style="padding: 10px 20px;"
-				on:click={() => {
-					featureKey(nb);
-				}}
-			>
-				{nb}
-			</button>
-		{/each}
-	</aside>
+	<!-- commonly used keys -->
 	<aside class="feature-key">
 		{#each preExpression as expData}
 			<button
 				class="feature-key-btn btn"
-				style="padding: 10px 10px;"
+				style="padding: 10px {expData.key.trim().length > 1
+					? '10px'
+					: '20px'}; {['()', '[]']
+					.map((p) => expData.key.includes(p))
+					.includes(true)
+					? 'letter-spacing: 1px;'
+					: ''}"
 				on:click={() => {
-					featureKey(expData.key, expData.cursor);
+					featureKey(expData.key, expData.cursor || 1);
 				}}
 			>
 				{expData.key}
 			</button>
 		{/each}
 	</aside>
+	<!-- copy-reset btn -->
 	<div class="actions">
+		{#if editting}
+			<button
+				class="btn"
+				style="background: #4e4eeb; color: #fff"
+				on:click={() => (editting = false)}
+			>
+				Done?
+			</button>
+		{:else}
+			<button
+				class="btn"
+				style="background: #74efff;"
+				on:click={() => {
+					if (
+						!toBeCopied
+							.map((tbc) => tbc.str)
+							.includes(currentExpr.trim()) &&
+						currentExpr.trim() !== ""
+					) {
+						toBeCopied.push({ str: currentExpr.trim() });
+						toBeCopied = toBeCopied;
+						currentExpr = "";
+						fieldStr.focus();
+					}
+				}}
+			>
+				Add
+			</button>
+		{/if}
 		<button
 			class="btn"
 			style="background: #74efff;"
@@ -113,9 +162,7 @@
 		<button
 			style="border: 0; background: #74efff; border-radius: 10px; color: #000; padding: 7.5px 16px; font-size: 18px; display: flex; align-items: center; justify-content: space-between;"
 			on:click={() => copy2ClipForCode()}
-			>Copy :&nbsp;<code>\</code>
-			<div style="transform: translate(0, -2px);">→</div>
-			<code>\\</code></button
+			>Copy&nbsp;<code>\\</code></button
 		>
 		<button
 			bind:this={resetBtn}
@@ -124,10 +171,74 @@
 			on:click={() => {
 				currentExpr = "";
 				fieldStr.focus();
-			}
-			}>Reset</button
+			}}>Reset</button
 		>
 	</div>
+	<!-- to be copied -->
+	{#if toBeCopied.length > 0}
+		<aside class="demo">
+			<b style="margin: 5px 0;font-size: 17px;"
+				>To be copied for JavaScript Syntax</b
+			>
+			{#each toBeCopied as t, idx (idx)}
+				<div
+					style="margin-left: 10px; display: flex; flex-direction: row; justify-content: start; align-items: center;"
+				>
+					<span style="font-weight: 900; margin-right: 10px;"
+						>{idx + 1}.</span
+					>
+					<Katex expression={t.str} />
+					{#if editting}
+						<button
+							style="margin-left: 10px; background-color: #4e4eeb; border: 0; border-radius: 25%; outline: none; width:25px; height:25px;"
+							on:click={() => (editting = false)}
+						>
+							<svg
+								width="13"
+								height="13"
+								stroke-width="0"
+								fill="#fff"
+								style="transform: translate(0.5px, 1px);"
+								viewBox="0 0 512 512"
+								xmlns="http://www.w3.org/2000/svg"
+								><path
+									d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"
+								/>
+							</svg>
+						</button>
+					{:else}
+						<button
+							style="margin-left: 10px; background-color: #4e4eeb; border: 0; border-radius: 25%; outline: none; width:25px; height:25px;"
+							on:click={() => (editting = true)}
+						>
+							<svg
+								width="20"
+								height="20"
+								stroke-width="0"
+								fill="#fff"
+								style="transform: translate(-2px, 0px);"
+								xmlns="http://www.w3.org/2000/svg"
+								><path
+									d="M 3 15 L 11 7 L 13 9 L 5 17 L 3 17 L 3 15 M 12 6 L 14 8 L 15 7 L 13 5 L 12 6"
+								/></svg
+							>
+						</button>
+					{/if}
+					<button
+						style="margin-left: 2px; background-color: #f00; color: #fff; border: 0; border-radius: 25%; outline-color: #9c9cff; width:25px; height:25px; font-size: 20px; font-weight: 900;"
+						on:click={() => {
+							toBeCopied = toBeCopied.filter(
+								(ti) => ti.str !== t.str
+							);
+						}}
+					>
+						×
+					</button>
+				</div>
+			{/each}
+		</aside>
+	{/if}
+	<!-- demo -->
 	{#if loaded}
 		<aside class="demo">
 			<b style="margin: 5px 0;font-size: 20px;">Demo</b>
@@ -202,6 +313,7 @@
 	}
 	.actions {
 		display: flex;
+		flex-wrap: wrap;
 		flex-direction: row;
 		justify-content: center;
 		align-items: center;
@@ -215,7 +327,7 @@
 		font-size: 18px;
 	}
 	.feature-key {
-		/* background-color: #fff; */
+		max-width: 380px;
 		display: flex;
 		flex-direction: row;
 		flex-wrap: wrap;
@@ -223,6 +335,7 @@
 		align-items: center;
 		gap: 10px;
 		border-radius: 10px;
+		margin: 0 auto 0 auto;
 	}
 	.feature-key-btn {
 		font-size: 18px;
