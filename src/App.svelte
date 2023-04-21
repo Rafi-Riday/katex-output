@@ -293,7 +293,11 @@
 						{#if idx !== 0}
 							<button
 								style="background-color: #323232df; border: 0; border-radius: 25%; outline: none; width:25px; height:25px;"
-								on:click={() => {}}
+								on:click={() => {
+									let tmp = toBeCopied[idx - 1];
+									toBeCopied[idx - 1] = toBeCopied[idx];
+									toBeCopied[idx] = tmp;
+								}}
 							>
 								<svg
 									viewBox="0 0 28 28"
@@ -313,7 +317,11 @@
 						{#if idx !== toBeCopied.length - 1}
 							<button
 								style="background-color: #323232df; border: 0; border-radius: 25%; outline: none; width:25px; height:25px;"
-								on:click={() => {}}
+								on:click={() => {
+									let tmp = toBeCopied[idx + 1];
+									toBeCopied[idx + 1] = toBeCopied[idx];
+									toBeCopied[idx] = tmp;
+								}}
 							>
 								<svg
 									viewBox="0 0 28 28"
