@@ -67,7 +67,11 @@
 		{ key: "\\newline ", cursor: 9 },
 	];
 
-	let toBeCopied = [{ str: "asd" }];
+	let toBeCopied = [
+		{ str: "\\text{CSE}" },
+		{ str: "\\text{EEE}" },
+		{ str: "\\text{ME}" },
+	];
 
 	let demo = [
 		"a^2",
@@ -82,8 +86,21 @@
 		"\\frac{b}{2}\\sqrt{a^2-\\frac{b^2}{4}}",
 	];
 
-	let editting = false;
 	let tempStorage;
+
+	let edittingIdx = null;
+	$: if (edittingIdx && toBeCopied) {
+		toBeCopied[edittingIdx].str = currentExpr.trim();
+		toBeCopied = toBeCopied;
+	}
+
+	const edittingDone = () => {
+		toBeCopied[edittingIdx].str = currentExpr.trim();
+		toBeCopied[edittingIdx].editting = false;
+		// toBeCopied.forEach((tbc) => (tbc.editting = false));
+		edittingIdx = null;
+		currentExpr = tempStorage;
+	};
 </script>
 
 <main>
@@ -125,11 +142,11 @@
 	</aside>
 	<!-- copy-reset btn -->
 	<div class="actions">
-		{#if editting}
+		{#if toBeCopied.map((tbc) => tbc.editting).includes(true)}
 			<button
 				class="btn"
 				style="background: #4e4eeb; color: #fff"
-				on:click={() => (editting = false)}
+				on:click={edittingDone}
 			>
 				Done?
 			</button>
@@ -144,7 +161,10 @@
 							.includes(currentExpr.trim()) &&
 						currentExpr.trim() !== ""
 					) {
-						toBeCopied.push({ str: currentExpr.trim() });
+						toBeCopied.push({
+							str: currentExpr.trim(),
+							editting: false,
+						});
 						toBeCopied = toBeCopied;
 						currentExpr = "";
 						fieldStr.focus();
@@ -174,68 +194,145 @@
 			}}>Reset</button
 		>
 	</div>
+	<!-- copy all -->
+	<!-- TODO: -->
+	<div class="actions">
+		<button
+			class="btn"
+			style="background: #74efff;"
+			on:click={() => copy2Clip()}>Copy All</button
+		>
+		<button
+			style="border: 0; background: #74efff; border-radius: 10px; color: #000; padding: 7.5px 16px; font-size: 18px; display: flex; align-items: center; justify-content: space-between;"
+			on:click={() => copy2ClipForCode()}
+			>Copy All&nbsp;<code>\\</code></button
+		>
+		<button
+			bind:this={resetBtn}
+			class="btn"
+			style="background: #ffc6b5;"
+			on:click={() => {
+				currentExpr = "";
+				fieldStr.focus();
+			}}>Clear List</button
+		>
+	</div>
 	<!-- to be copied -->
+	<!-- FIXME: -->
 	{#if toBeCopied.length > 0}
 		<aside class="demo">
 			<b style="margin: 5px 0;font-size: 17px;"
 				>To be copied for JavaScript Syntax</b
 			>
-			{#each toBeCopied as t, idx (idx)}
-				<div
-					style="margin-left: 10px; display: flex; flex-direction: row; justify-content: start; align-items: center;"
-				>
-					<span style="font-weight: 900; margin-right: 10px;"
-						>{idx + 1}.</span
+			<div style="display: flex; flex-direction: column; gap: 8px">
+				{#each toBeCopied as t, idx (idx)}
+					<div
+						style="margin-left: 5px; display: flex; flex-wrap: wrap; flex-direction: row; justify-content: start; align-items: center; gap: 8px;"
 					>
-					<Katex expression={t.str} />
-					{#if editting}
-						<button
-							style="margin-left: 10px; background-color: #4e4eeb; border: 0; border-radius: 25%; outline: none; width:25px; height:25px;"
-							on:click={() => (editting = false)}
-						>
-							<svg
-								width="13"
-								height="13"
-								stroke-width="0"
-								fill="#fff"
-								style="transform: translate(0.5px, 1px);"
-								viewBox="0 0 512 512"
-								xmlns="http://www.w3.org/2000/svg"
-								><path
-									d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"
-								/>
-							</svg>
-						</button>
-					{:else}
-						<button
-							style="margin-left: 10px; background-color: #4e4eeb; border: 0; border-radius: 25%; outline: none; width:25px; height:25px;"
-							on:click={() => (editting = true)}
-						>
-							<svg
-								width="20"
-								height="20"
-								stroke-width="0"
-								fill="#fff"
-								style="transform: translate(-2px, 0px);"
-								xmlns="http://www.w3.org/2000/svg"
-								><path
-									d="M 3 15 L 11 7 L 13 9 L 5 17 L 3 17 L 3 15 M 12 6 L 14 8 L 15 7 L 13 5 L 12 6"
-								/></svg
+						<span style="font-weight: 900;">{idx + 1}.</span>
+						<Katex expression={t.str} />
+						{#if t.editting}
+							<!-- tick -->
+							<button
+								style="background-color: #4e4eeb; border: 0; border-radius: 25%; outline: none; width:25px; height:25px;"
+								on:click={edittingDone}
 							>
+								<svg
+									width="13"
+									height="13"
+									stroke-width="0"
+									fill="#fff"
+									style="transform: translate(0.5px, 1px);"
+									viewBox="0 0 512 512"
+									xmlns="http://www.w3.org/2000/svg"
+									><path
+										d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"
+									/>
+								</svg>
+							</button>
+						{:else}
+							<!-- edit -->
+							<button
+								style="background-color: #4e4eeb; border: 0; border-radius: 25%; outline: none; width:25px; height:25px;"
+								on:click={() => {
+									toBeCopied.forEach(
+										(tbc) => (tbc.editting = false)
+									);
+									t.editting = true;
+									tempStorage = currentExpr.trim();
+									currentExpr = t.str;
+									edittingIdx = idx;
+								}}
+							>
+								<svg
+									width="20"
+									height="20"
+									stroke-width="0"
+									fill="#fff"
+									style="transform: translate(-2px, 0px);"
+									xmlns="http://www.w3.org/2000/svg"
+									><path
+										d="M 3 15 L 11 7 L 13 9 L 5 17 L 3 17 L 3 15 M 12 6 L 14 8 L 15 7 L 13 5 L 12 6"
+									/></svg
+								>
+							</button>
+						{/if}
+						<!-- remove -->
+						<button
+							style="background-color: #f00; color: #fff; border: 0; border-radius: 25%; outline-color: #9c9cff; width:25px; height:25px; font-size: 20px; font-weight: 900;"
+							on:click={() => {
+								toBeCopied = toBeCopied.filter(
+									(ti) => ti.str !== t.str
+								);
+							}}
+						>
+							×
 						</button>
-					{/if}
-					<button
-						style="margin-left: 2px; background-color: #f00; color: #fff; border: 0; border-radius: 25%; outline-color: #9c9cff; width:25px; height:25px; font-size: 20px; font-weight: 900;"
-						on:click={() => {
-							toBeCopied = toBeCopied.filter(
-								(ti) => ti.str !== t.str
-							);
-						}}
-					>
-						×
-					</button>
-				</div>
-			{/each}
+						<!-- moving starts -->
+						<!-- move up -->
+						{#if idx !== 0}
+							<button
+								style="background-color: #323232df; border: 0; border-radius: 25%; outline: none; width:25px; height:25px;"
+								on:click={() => {}}
+							>
+								<svg
+									viewBox="0 0 28 28"
+									width="20"
+									height="20"
+									stroke-width="0"
+									fill="#fff"
+									style="transform: translate(-0.6px, 7px);"
+									xmlns="http://www.w3.org/2000/svg"
+									><path
+										d="M 0 10 L 20 10 L 10 0 L 0 10"
+									/></svg
+								>
+							</button>
+						{/if}
+						<!-- move down -->
+						{#if idx !== toBeCopied.length - 1}
+							<button
+								style="background-color: #323232df; border: 0; border-radius: 25%; outline: none; width:25px; height:25px;"
+								on:click={() => {}}
+							>
+								<svg
+									viewBox="0 0 28 28"
+									width="20"
+									height="20"
+									stroke-width="0"
+									fill="#fff"
+									style="transform: translate(-0.6px, 9px);"
+									xmlns="http://www.w3.org/2000/svg"
+									><path
+										d="M 0 0 L 20 0 L 10 10 L 0 0"
+									/></svg
+								>
+							</button>
+						{/if}
+						<!-- moving ends -->
+					</div>
+				{/each}
+			</div>
 		</aside>
 	{/if}
 	<!-- demo -->
