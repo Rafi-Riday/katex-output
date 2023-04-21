@@ -28,6 +28,32 @@
 		resetBtn.focus();
 	};
 
+	let toBeCopied = [];
+
+	const copy2ClipAll = async () => {
+		let temp = currentExpr;
+		currentExpr = toBeCopied.map((tbc) => tbc.str).join("\n");
+		currentExpr = currentExpr.replaceAll("\\\\", "\\");
+		await tick();
+		fieldStr.select();
+		document.execCommand("copy");
+		resetBtn.focus();
+		currentExpr = temp;
+	};
+
+	const copy2ClipForCodeAll = async () => {
+		let temp = currentExpr;
+		currentExpr = toBeCopied.map((tbc) => tbc.str).join("\n");
+		currentExpr = currentExpr.replaceAll("\\\\", "\\");
+		currentExpr = currentExpr.replaceAll("\\", "\\\\");
+		await tick();
+		fieldStr.select();
+		document.execCommand("copy");
+		currentExpr = currentExpr.replaceAll("\\\\", "\\");
+		resetBtn.focus();
+		currentExpr = temp;
+	};
+
 	const featureKey = async (key, cursor = 1) => {
 		const { selectionStart, selectionEnd, value } = fieldStr;
 		if (selectionStart === selectionEnd) {
@@ -67,12 +93,6 @@
 		{ key: "\\newline ", cursor: 9 },
 	];
 
-	let toBeCopied = [
-		{ str: "\\text{CSE}" },
-		{ str: "\\text{EEE}" },
-		{ str: "\\text{ME}" },
-	];
-
 	let demo = [
 		"a^2",
 		"a^{xyz}",
@@ -89,7 +109,7 @@
 	let tempStorage;
 
 	let edittingIdx = null;
-	$: if (edittingIdx && toBeCopied) {
+	$: if (edittingIdx !== null) {
 		toBeCopied[edittingIdx].str = currentExpr.trim();
 		toBeCopied = toBeCopied;
 	}
@@ -101,6 +121,11 @@
 		edittingIdx = null;
 		currentExpr = tempStorage;
 	};
+
+	// empty item detector in toBeCopied
+	$: if (edittingIdx === null) {
+		toBeCopied = toBeCopied.filter((tbc) => tbc.str.trim() !== "");
+	}
 </script>
 
 <main>
@@ -141,84 +166,84 @@
 		{/each}
 	</aside>
 	<!-- copy-reset btn -->
-	<div class="actions">
-		{#if toBeCopied.map((tbc) => tbc.editting).includes(true)}
-			<button
-				class="btn"
-				style="background: #4e4eeb; color: #fff"
-				on:click={edittingDone}
-			>
-				Done?
-			</button>
-		{:else}
+	{#if currentExpr.trim() !== ""}
+		<div class="actions">
+			{#if toBeCopied.map((tbc) => tbc.editting).includes(true)}
+				<button
+					class="btn"
+					style="background: #4e4eeb; color: #fff"
+					on:click={edittingDone}
+				>
+					Done?
+				</button>
+			{:else}
+				<button
+					class="btn"
+					style="background: #74efff;"
+					on:click={() => {
+						if (
+							!toBeCopied
+								.map((tbc) => tbc.str)
+								.includes(currentExpr.trim()) &&
+							currentExpr.trim() !== ""
+						) {
+							toBeCopied.push({
+								str: currentExpr.trim(),
+								editting: false,
+							});
+							toBeCopied = toBeCopied;
+							currentExpr = "";
+							fieldStr.focus();
+						}
+					}}
+				>
+					Add
+				</button>
+			{/if}
 			<button
 				class="btn"
 				style="background: #74efff;"
-				on:click={() => {
-					if (
-						!toBeCopied
-							.map((tbc) => tbc.str)
-							.includes(currentExpr.trim()) &&
-						currentExpr.trim() !== ""
-					) {
-						toBeCopied.push({
-							str: currentExpr.trim(),
-							editting: false,
-						});
-						toBeCopied = toBeCopied;
-						currentExpr = "";
-						fieldStr.focus();
-					}
-				}}
+				on:click={copy2Clip}>Copy</button
 			>
-				Add
-			</button>
-		{/if}
-		<button
-			class="btn"
-			style="background: #74efff;"
-			on:click={() => copy2Clip()}>Copy</button
-		>
-		<button
-			style="border: 0; background: #74efff; border-radius: 10px; color: #000; padding: 7.5px 16px; font-size: 18px; display: flex; align-items: center; justify-content: space-between;"
-			on:click={() => copy2ClipForCode()}
-			>Copy&nbsp;<code>\\</code></button
-		>
-		<button
-			bind:this={resetBtn}
-			class="btn"
-			style="background: #ffc6b5;"
-			on:click={() => {
-				currentExpr = "";
-				fieldStr.focus();
-			}}>Reset</button
-		>
-	</div>
+			<button
+				style="border: 0; background: #74efff; border-radius: 10px; color: #000; padding: 7.5px 16px; font-size: 18px; display: flex; align-items: center; justify-content: space-between;"
+				on:click={copy2ClipForCode}>Copy&nbsp;<code>\\</code></button
+			>
+			<button
+				bind:this={resetBtn}
+				class="btn"
+				style="background: #ffc6b5;"
+				on:click={() => {
+					currentExpr = "";
+					fieldStr.focus();
+				}}>Reset</button
+			>
+		</div>
+	{/if}
 	<!-- copy all -->
-	<!-- TODO: -->
-	<div class="actions">
-		<button
-			class="btn"
-			style="background: #74efff;"
-			on:click={() => copy2Clip()}>Copy All</button
-		>
-		<button
-			style="border: 0; background: #74efff; border-radius: 10px; color: #000; padding: 7.5px 16px; font-size: 18px; display: flex; align-items: center; justify-content: space-between;"
-			on:click={() => copy2ClipForCode()}
-			>Copy All&nbsp;<code>\\</code></button
-		>
-		<button
-			bind:this={resetBtn}
-			class="btn"
-			style="background: #ffc6b5;"
-			on:click={() => {
-				currentExpr = "";
-				fieldStr.focus();
-			}}>Clear List</button
-		>
-	</div>
+	{#if toBeCopied.length !== 0}
+		<div class="actions">
+			<button
+				class="btn"
+				style="background: #00b8ff;"
+				on:click={copy2ClipAll}>Copy All</button
+			>
+			<button
+				style="border: 0; background: #00b8ff; border-radius: 10px; color: #000; padding: 7.5px 16px; font-size: 18px; display: flex; align-items: center; justify-content: space-between;"
+				on:click={copy2ClipForCodeAll}
+				>Copy All&nbsp;<code>\\</code></button
+			>
+			<button
+				bind:this={resetBtn}
+				class="btn"
+				style="background: #ff4747; color: #fff"
+				on:click={() => {
+					toBeCopied = [];
+				}}>Clear List</button
+			>
+		</div>
+	{/if}
 	<!-- to be copied -->
-	<!-- FIXME: -->
 	{#if toBeCopied.length > 0}
 		<aside class="demo">
 			<b style="margin: 5px 0;font-size: 17px;"
@@ -262,6 +287,7 @@
 									tempStorage = currentExpr.trim();
 									currentExpr = t.str;
 									edittingIdx = idx;
+									fieldStr.focus();
 								}}
 							>
 								<svg
