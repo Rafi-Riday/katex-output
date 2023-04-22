@@ -11,7 +11,7 @@
 	}, 1000);
 
 	const copy2Clip = async () => {
-		currentExpr = currentExpr.replaceAll("\\\\", "\\");
+		currentExpr = currentExpr.trim().replaceAll("\\\\", "\\");
 		await tick();
 		fieldStr.select();
 		document.execCommand("copy");
@@ -19,21 +19,21 @@
 	};
 
 	const copy2ClipForCode = async () => {
-		currentExpr = currentExpr.replaceAll("\\\\", "\\");
-		currentExpr = currentExpr.replaceAll("\\", "\\\\");
+		currentExpr = currentExpr.trim().replaceAll("\\\\", "\\");
+		currentExpr = currentExpr.trim().replaceAll("\\", "\\\\");
 		await tick();
 		fieldStr.select();
 		document.execCommand("copy");
-		currentExpr = currentExpr.replaceAll("\\\\", "\\");
+		currentExpr = currentExpr.trim().replaceAll("\\\\", "\\");
 		resetBtn.focus();
 	};
 
 	let toBeCopied = [];
 
 	const copy2ClipAll = async () => {
-		let temp = currentExpr;
+		let temp = currentExpr.trim();
 		currentExpr = toBeCopied.map((tbc) => tbc.str).join("\n");
-		currentExpr = currentExpr.replaceAll("\\\\", "\\");
+		currentExpr = currentExpr.trim().replaceAll("\\\\", "\\");
 		await tick();
 		fieldStr.select();
 		document.execCommand("copy");
@@ -42,14 +42,14 @@
 	};
 
 	const copy2ClipForCodeAll = async () => {
-		let temp = currentExpr;
+		let temp = currentExpr.trim();
 		currentExpr = toBeCopied.map((tbc) => tbc.str).join("\n");
-		currentExpr = currentExpr.replaceAll("\\\\", "\\");
-		currentExpr = currentExpr.replaceAll("\\", "\\\\");
+		currentExpr = currentExpr.trim().replaceAll("\\\\", "\\");
+		currentExpr = currentExpr.trim().replaceAll("\\", "\\\\");
 		await tick();
 		fieldStr.select();
 		document.execCommand("copy");
-		currentExpr = currentExpr.replaceAll("\\\\", "\\");
+		currentExpr = currentExpr.trim().replaceAll("\\\\", "\\");
 		resetBtn.focus();
 		currentExpr = temp;
 	};
@@ -106,20 +106,23 @@
 		"\\frac{b}{2}\\sqrt{a^2-\\frac{b^2}{4}}",
 	];
 
-	let tempStorage;
+	let tempStorage = "";
+	let tempEdittingValue;
 
 	let edittingIdx = null;
-	$: if (edittingIdx !== null) {
+	$: if (edittingIdx !== null && toBeCopied[edittingIdx]) {
 		toBeCopied[edittingIdx].str = currentExpr.trim();
 		toBeCopied = toBeCopied;
 	}
 
 	const edittingDone = () => {
-		toBeCopied[edittingIdx].str = currentExpr.trim();
-		toBeCopied[edittingIdx].editting = false;
-		// toBeCopied.forEach((tbc) => (tbc.editting = false));
+		if (toBeCopied[edittingIdx]) {
+			toBeCopied[edittingIdx].str = currentExpr.trim();
+			toBeCopied[edittingIdx].editting = false;
+		}
 		edittingIdx = null;
 		currentExpr = tempStorage;
+		tempStorage = "";
 	};
 
 	// empty item detector in toBeCopied
@@ -132,7 +135,7 @@
 	<!-- output -->
 	{#if currentExpr.trim() !== ""}
 		<center class="output">
-			<Katex expression={currentExpr} />
+			<Katex expression={currentExpr.trim()} />
 			<!-- displayMode -->
 			<!-- .replace(/\\/g, "\\\\") -->
 		</center>
@@ -197,7 +200,11 @@
 						}
 					}}
 				>
-					Add
+					{toBeCopied
+						.map((tbc) => tbc.str)
+						.includes(currentExpr.trim())
+						? "Added"
+						: "Add"}
 				</button>
 			{/if}
 			<button
@@ -275,16 +282,53 @@
 									/>
 								</svg>
 							</button>
+							<!-- cancel -->
+							<button
+								style="background-color: #4e4eeb; color: #fff; border: 0; border-radius: 25%; outline-color: #9c9cff; width:25px; height:25px; font-size: 20px; font-weight: 900;"
+								on:click={() => {
+									edittingDone();
+									t.str = tempEdittingValue;
+								}}
+							>
+								×
+							</button>
+							<!-- remove -->
+							<button
+								style="background-color: #f00; border: 0; border-radius: 25%; outline: none; width:25px; height:25px;"
+								on:click={() => {
+									edittingIdx = null;
+									currentExpr = tempStorage;
+									toBeCopied = toBeCopied.filter(
+										(ti) => ti.str !== t.str
+									);
+								}}
+							>
+								<svg
+									viewBox="0 0 38 38"
+									width="30"
+									height="30"
+									stroke-width="0"
+									fill="#fff"
+									style="transform: translate(-2.5px, 1.4px);"
+									xmlns="http://www.w3.org/2000/svg"
+									><path
+										d="M5 20a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8h2V6h-4V4a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v2H3v2h2zM9 4h6v2H9zM8 8h9v12H7V8z"
+									/><path d="M9 10h2v8H9zm4 0h2v8h-2z" /></svg
+								>
+							</button>
 						{:else}
 							<!-- edit -->
 							<button
 								style="background-color: #4e4eeb; border: 0; border-radius: 25%; outline: none; width:25px; height:25px;"
 								on:click={() => {
+									tempEdittingValue = t.str;
 									toBeCopied.forEach(
 										(tbc) => (tbc.editting = false)
 									);
 									t.editting = true;
-									tempStorage = currentExpr.trim();
+									if (edittingIdx === null) {
+										tempStorage = currentExpr.trim();
+									}
 									currentExpr = t.str;
 									edittingIdx = idx;
 									fieldStr.focus();
@@ -303,67 +347,82 @@
 								>
 							</button>
 						{/if}
-						<!-- remove -->
-						<button
-							style="background-color: #f00; color: #fff; border: 0; border-radius: 25%; outline-color: #9c9cff; width:25px; height:25px; font-size: 20px; font-weight: 900;"
-							on:click={() => {
-								toBeCopied = toBeCopied.filter(
-									(ti) => ti.str !== t.str
-								);
-							}}
-						>
-							×
-						</button>
+						{#if !t.editting}
+							<!-- remove -->
+							<button
+								style="background-color: #f00; border: 0; border-radius: 25%; outline: none; width:25px; height:25px;"
+								on:click={() => {
+									toBeCopied = toBeCopied.filter(
+										(ti) => ti.str !== t.str
+									);
+								}}
+							>
+								<svg
+									viewBox="0 0 38 38"
+									width="30"
+									height="30"
+									stroke-width="0"
+									fill="#fff"
+									style="transform: translate(-2.5px, 1.4px);"
+									xmlns="http://www.w3.org/2000/svg"
+									><path
+										d="M5 20a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8h2V6h-4V4a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v2H3v2h2zM9 4h6v2H9zM8 8h9v12H7V8z"
+									/><path d="M9 10h2v8H9zm4 0h2v8h-2z" /></svg
+								>
+							</button>
+						{/if}
 						<!-- moving starts -->
-						<!-- move up -->
-						{#if idx !== 0}
-							<button
-								style="background-color: #323232df; border: 0; border-radius: 25%; outline: none; width:25px; height:25px;"
-								on:click={() => {
-									let tmp = toBeCopied[idx - 1];
-									toBeCopied[idx - 1] = toBeCopied[idx];
-									toBeCopied[idx] = tmp;
-								}}
-							>
-								<svg
-									viewBox="0 0 28 28"
-									width="20"
-									height="20"
-									stroke-width="0"
-									fill="#fff"
-									style="transform: translate(-0.6px, 7px);"
-									xmlns="http://www.w3.org/2000/svg"
-									><path
-										d="M 0 10 L 20 10 L 10 0 L 0 10"
-									/></svg
+						{#if edittingIdx === null}
+							<!-- move up -->
+							{#if idx !== 0}
+								<button
+									style="background-color: #323232df; border: 0; border-radius: 25%; outline: none; width:25px; height:25px;"
+									on:click={() => {
+										let tmp = toBeCopied[idx - 1];
+										toBeCopied[idx - 1] = toBeCopied[idx];
+										toBeCopied[idx] = tmp;
+									}}
 								>
-							</button>
-						{/if}
-						<!-- move down -->
-						{#if idx !== toBeCopied.length - 1}
-							<button
-								style="background-color: #323232df; border: 0; border-radius: 25%; outline: none; width:25px; height:25px;"
-								on:click={() => {
-									let tmp = toBeCopied[idx + 1];
-									toBeCopied[idx + 1] = toBeCopied[idx];
-									toBeCopied[idx] = tmp;
-								}}
-							>
-								<svg
-									viewBox="0 0 28 28"
-									width="20"
-									height="20"
-									stroke-width="0"
-									fill="#fff"
-									style="transform: translate(-0.6px, 9px);"
-									xmlns="http://www.w3.org/2000/svg"
-									><path
-										d="M 0 0 L 20 0 L 10 10 L 0 0"
-									/></svg
+									<svg
+										viewBox="0 0 28 28"
+										width="20"
+										height="20"
+										stroke-width="0"
+										fill="#fff"
+										style="transform: translate(-0.6px, 7px);"
+										xmlns="http://www.w3.org/2000/svg"
+										><path
+											d="M 0 10 L 20 10 L 10 0 L 0 10"
+										/></svg
+									>
+								</button>
+							{/if}
+							<!-- move down -->
+							{#if idx !== toBeCopied.length - 1}
+								<button
+									style="background-color: #323232df; border: 0; border-radius: 25%; outline: none; width:25px; height:25px;"
+									on:click={() => {
+										let tmp = toBeCopied[idx + 1];
+										toBeCopied[idx + 1] = toBeCopied[idx];
+										toBeCopied[idx] = tmp;
+									}}
 								>
-							</button>
+									<svg
+										viewBox="0 0 28 28"
+										width="20"
+										height="20"
+										stroke-width="0"
+										fill="#fff"
+										style="transform: translate(-0.6px, 9px);"
+										xmlns="http://www.w3.org/2000/svg"
+										><path
+											d="M 0 0 L 20 0 L 10 10 L 0 0"
+										/></svg
+									>
+								</button>
+							{/if}
+							<!-- moving ends -->
 						{/if}
-						<!-- moving ends -->
 					</div>
 				{/each}
 			</div>
