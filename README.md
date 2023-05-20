@@ -5,6 +5,5 @@
 - `Svelte 🦾`
 - `Katex` (Obviously)
 - `Vite ⚡`
-- Some brain 🧠
 
 Live Site: https://katex-output.netlify.app/
