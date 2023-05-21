@@ -1,6 +1,6 @@
 <script>
 	import { tick } from "svelte";
-	import Katex from "./Katex.svelte";
+	import Katexify from "./Katexify";
 
 	let currentExpr = "";
 	let fieldStr;
@@ -131,11 +131,20 @@
 	}
 </script>
 
+<svelte:head>
+	<link
+		rel="stylesheet"
+		href="https://cdn.jsdelivr.net/npm/katex@0.16.7/dist/katex.min.css"
+		integrity="sha384-3UiQGuEI4TTMaFmGIZumfRPtfKQ3trwQE2JgosJxCnGmQpL/lJdjpcHkaaFwHlcI"
+		crossorigin="anonymous"
+	/>
+</svelte:head>
+
 <main>
 	<!-- output -->
 	{#if currentExpr.trim() !== ""}
 		<center class="output">
-			<Katex expression={currentExpr.trim()} />
+			{@html Katexify(currentExpr.trim())}
 			<!-- displayMode -->
 			<!-- .replace(/\\/g, "\\\\") -->
 		</center>
@@ -262,7 +271,7 @@
 						style="margin-left: 5px; display: flex; flex-wrap: wrap; flex-direction: row; justify-content: start; align-items: center; gap: 8px;"
 					>
 						<span style="font-weight: 900;">{idx + 1}.</span>
-						<Katex expression={t.str} />
+						{@html Katexify(t.str)}
 						{#if t.editting}
 							<!-- tick -->
 							<button
@@ -438,7 +447,7 @@
 						>{d}</button
 					>
 					=
-					<Katex expression={d} />
+					{@html Katexify(d)}
 				</div>
 			{/each}
 			<p style="display: flex; flex-direction: column; gap: 12px">
